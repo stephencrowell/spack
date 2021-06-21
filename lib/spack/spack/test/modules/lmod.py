@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 import re
 import pytest
+import sys
+import os
 
 import spack.environment as ev
 import spack.main
@@ -62,12 +64,12 @@ class TestLmod(object):
         if compiler == 'clang@3.3' or spec_string == 'mpich@3.0.1':
             assert 'Core' in layout.available_path_parts
         else:
-            assert compiler.replace('@', '/') in layout.available_path_parts
+            assert compiler.replace('@', os.path.sep) in layout.available_path_parts
 
         # Check that the provider part instead has always an hash even if
         # hash has been disallowed in the configuration file
         path_parts = layout.available_path_parts
-        service_part = spec_string.replace('@', '/')
+        service_part = spec_string.replace('@', os.path.sep)
         service_part = '-'.join([service_part, layout.spec.dag_hash(length=7)])
         assert service_part in path_parts
 
@@ -147,7 +149,10 @@ class TestLmod(object):
 
         for line in content:
             if re.match(r'[a-z]+_path\("COLON"', line):
-                assert line.endswith('"foo", ":")')
+                if sys.platform == "win32":
+                    assert line.endswith('"foo", ";")')
+                else:
+                    assert line.endswith('"foo", ":")')
             elif re.match(r'[a-z]+_path\("SEMICOLON"', line):
                 assert line.endswith('"bar", ";")')
 
@@ -171,15 +176,15 @@ class TestLmod(object):
         path = module.layout.filename
         mpi_spec = spec['mpi']
 
-        mpi_element = "{0}/{1}-{2}/".format(
-            mpi_spec.name, mpi_spec.version, mpi_spec.dag_hash(length=7)
+        mpi_element = "{0}{3}{1}-{2}{3}".format(
+            mpi_spec.name, mpi_spec.version, mpi_spec.dag_hash(length=7), os.path.sep
         )
 
         assert mpi_element in path
 
         mpileaks_spec = spec
-        mpileaks_element = "{0}/{1}.lua".format(
-            mpileaks_spec.name, mpileaks_spec.version
+        mpileaks_element = "{0}{2}{1}.lua".format(
+            mpileaks_spec.name, mpileaks_spec.version, os.path.sep
         )
 
         assert path.endswith(mpileaks_element)
@@ -318,6 +323,10 @@ class TestLmod(object):
 
         assert writer.conf.projections == expected
         projection = writer.spec.format(writer.conf.projections['all'])
+
+        if sys.platform == "win32":
+            projection = projection.replace('/', '\\')
+
         assert projection in writer.layout.use_name
 
     def test_config_backwards_compat(self, mutable_config):
@@ -337,6 +346,8 @@ class TestLmod(object):
         assert old_format == new_format
         assert old_format == settings['lmod']
 
+    @pytest.mark.skipif(sys.platform == "win32",
+                        reason='Not supported on Windows (yet)')
     def test_modules_relative_to_view(
             self, tmpdir, modulefile_content, module_configuration, install_mockery):
         with ev.Environment(str(tmpdir), with_view=True) as e:

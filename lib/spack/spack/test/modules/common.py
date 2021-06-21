@@ -6,6 +6,7 @@
 import os
 import stat
 import pytest
+import sys
 import collections
 
 import spack.spec
@@ -50,6 +51,8 @@ def mock_module_filename(monkeypatch, tmpdir):
                         'filename',
                         filename)
 
+    print(filename)
+
     yield filename
 
 
@@ -60,9 +63,13 @@ def mock_package_perms(monkeypatch):
                         'get_package_permissions',
                         lambda spec: perms)
 
+    print(perms)
+
     yield perms
 
 
+@pytest.mark.skipif(sys.platform == "win32",
+                    reason='Not supported on Windows (yet)')
 def test_modules_written_with_proper_permissions(mock_module_filename,
                                                  mock_package_perms,
                                                  mock_packages, config):
@@ -186,6 +193,8 @@ module_index:
         spack.modules.common.upstream_module_index = old_index
 
 
+@pytest.mark.skipif(sys.platform == "win32",
+                    reason='Not supported on Windows (yet)')
 def test_load_installed_package_not_in_repo(install_mockery, mock_fetch,
                                             monkeypatch):
     # Get a basic concrete spec for the trivial install package.
