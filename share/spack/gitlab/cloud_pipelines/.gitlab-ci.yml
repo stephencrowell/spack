@@ -316,3 +316,38 @@ tutorial-develop-build:
   needs:
     - artifacts: True
       job: tutorial-develop-generate
+
+########################################
+# ECP Data & Vis SDK With oneapi
+########################################
+.data-vis-sdk-oneapi:
+  variables:
+    SPACK_CI_STACK_NAME: data-vis-sdk-oneapi
+
+data-vis-sdk-oneapi-pr-generate:
+  extends: [ ".data-vis-sdk-oneapi", ".pr-generate"]
+
+data-vis-sdk-oneapi-develop-generate:
+  extends: [ ".data-vis-sdk-oneapi", ".develop-generate"]
+
+data-vis-sdk-oneapi-pr-build:
+  extends: [ ".data-vis-sdk-oneapi", ".pr-build" ]
+  trigger:
+    include:
+      - artifact: jobs_scratch_dir/cloud-ci-pipeline.yml
+        job: data-vis-sdk-oneapi-pr-generate
+    strategy: depend
+  needs:
+    - artifacts: True
+      job: data-vis-sdk-oneapi-pr-generate
+
+data-vis-sdk-oneapi-develop-build:
+  extends: [ ".data-vis-sdk-oneapi", ".develop-build" ]
+  trigger:
+    include:
+      - artifact: jobs_scratch_dir/cloud-ci-pipeline.yml
+        job: data-vis-sdk-oneapi-develop-generate
+    strategy: depend
+  needs:
+    - artifacts: True
+      job: data-vis-sdk-oneapi-develop-generate
