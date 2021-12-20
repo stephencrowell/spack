@@ -62,7 +62,7 @@ class Unifyfs(AutotoolsPackage):
     # Parallel disabled to prevent tests from being run out-of-order when
     # installed with the --test={root, all} option.
     parallel = False
-    debug_build = False
+    debug_build = True
     build_directory = 'spack-build'
 
     # Only builds properly with debug symbols when flag_handler =
@@ -80,6 +80,10 @@ class Unifyfs(AutotoolsPackage):
         # See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=98266
         if '%gcc@11' in self.spec:
             env.append_flags('CFLAGS', '-Wno-array-bounds')
+
+        # oneapi has unused function (next_page_align) that prevents building
+        if '%oneapi' in self.spec:
+            env.append_flags('CFLAGS', '-Wno-unused-function')
 
     def configure_args(self):
         spec = self.spec
