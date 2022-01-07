@@ -62,7 +62,7 @@ class Unifyfs(AutotoolsPackage):
     # Parallel disabled to prevent tests from being run out-of-order when
     # installed with the --test={root, all} option.
     parallel = False
-    debug_build = True
+    debug_build = False
     build_directory = 'spack-build'
 
     # Only builds properly with debug symbols when flag_handler =
